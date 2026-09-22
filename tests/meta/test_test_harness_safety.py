@@ -26,7 +26,8 @@ def _test_sources() -> list[Path]:
 
 
 def test_test_suite_contains_no_private_runtime_database_path():
-    forbidden = ("~/PersonalOS-data", "PersonalOS-data/personal_os.db")
+    private_dir = "Personal" + "OS-data"
+    forbidden = ("~/" + private_dir, private_dir + "/personal_os.db")
     for path in _test_sources():
         text = path.read_text()
         assert not any(value in text for value in forbidden), path
