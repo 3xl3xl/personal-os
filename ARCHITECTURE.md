@@ -57,6 +57,11 @@ See the diagram in §1. Only the Repository/Data Access Layer contains persisten
 
 Inside the Git repository (code, schema definitions, policy, and documentation only):
 
+Application code is organized as a `src`-layout Python package under a single
+namespace, `personal_os.*`. The MCP adapter lives at `personal_os.adapters.mcp`
+rather than a top-level `mcp/` package, so that it never shadows the external
+MCP SDK's own `mcp` import namespace.
+
 ```
 personal-os/
   README.md
@@ -64,17 +69,22 @@ personal-os/
   SECURITY.md
   ARCHITECTURE.md
   .gitignore
-  core/
-  database/
-    schema/                ← table/entity definitions (structure only, never data)
-    migrations/             ← versioned migration scripts
-  mcp/
-    server.*                ← MCP tool adapter (thin)
-  modules/
-    finance/
-    goals/
-    revenue/
-    time/
+  src/
+    personal_os/
+      domain/                ← Money, enums, IDs, datetime primitives
+      database/
+        schema/               ← table/entity definitions (structure only, never data)
+        migrations/            ← versioned migration scripts
+      repository/
+      services/
+      adapters/
+        mcp/                  ← MCP tool adapter (thin); namespaced as
+                                 personal_os.adapters.mcp
+      modules/
+        finance/
+        goals/
+        revenue/
+        time/
   policies/
     permissions.yaml
   tests/
