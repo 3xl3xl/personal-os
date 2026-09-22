@@ -83,6 +83,9 @@ def net_worth(
         # The account currency is an actual stored fact and gives an empty
         # ledger a well-defined zero without assuming JPY or another currency.
         account_balances.append(_sum_money(active, empty_currency=account.currency_code))
+    # An empty runtime has no currency-bearing fact from which a typed Money
+    # value can be derived. MCP/read adapters may surface this domain condition
+    # explicitly; Finance must not invent a default currency.
     value = _sum_money(account_balances)
     return FinanceValueResult(metric_key="net_worth", value=value, as_of=as_of)
 
