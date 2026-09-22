@@ -1,6 +1,6 @@
 # ADR-009: Backup & Restore Strategy
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-22
 
 ## Context
@@ -9,12 +9,13 @@ ARCHITECTURE.md §10 fixes backup requirements (a backup mechanism must exist be
 
 ## Decision
 
-Not yet finalized. The leading candidate mechanisms for taking a consistent SQLite backup are:
+Personal OS v0.1 uses the SQLite Online Backup API through Python's standard-library sqlite3.Connection.backup() for both backup and restore.
 
-- the SQLite Online Backup API, and
-- SQLite's `VACUUM INTO` statement.
+The implementation accepts explicit source, backup-directory, and restore-destination paths. It has no implicit fallback to the private runtime database. Each snapshot receives a UTC timestamp plus a collision-resistant suffix, so previous snapshots are not overwritten.
 
-Both provide built-in consistency guarantees without requiring an external dependency. The final choice between them, along with the versioning/retention policy and any encryption wrapper, is deferred to the dedicated backup-implementation phase.
+Every completed backup and restore is checked with PRAGMA integrity_check. A corrupt or missing backup fails closed.
+
+Encryption is a property of the destination/storage layer, not implemented by the SQLite backup primitive itself. The local backup mechanism remains compatible with an encrypted filesystem or volume without coupling database code to a specific encryption provider.
 
 ## Rationale
 
@@ -29,7 +30,10 @@ Both provide built-in consistency guarantees without requiring an external depen
 
 ## Consequences
 
-- No backup mechanism is implemented yet. This ADR records the narrowed candidate set and the fixed requirements it must satisfy, pending a final decision in the backup-implementation phase.
+- Backup/restore is SQLite-specific persistence infrastructure.
+- Versioned snapshots are retained until a future explicit retention policy removes them; Step 12 does not silently delete historical backups.
+- Backup encryption is not performed in application code. Production deployment must place the backup directory on an encryption-capable destination before real data is seeded.
+- Permission policy remains outside this module. A future caller that restores over a real runtime database must pass through the appropriate explicit-approval boundary.
 
 ## Constraints
 
