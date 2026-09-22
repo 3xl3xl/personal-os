@@ -28,10 +28,11 @@ def main() -> int:
     # Restrict the report to first-party application modules.  The stdlib
     # trace collector sees dependencies imported by pytest too; reporting those
     # makes the output noisy and obscures Personal OS coverage.
+    source_root = (ROOT / "src" / "personal_os").resolve()
     first_party = {
-        filename: counts
-        for filename, counts in results.counts.items()
-        if str(Path(filename).resolve()).startswith(str((ROOT / "src" / "personal_os").resolve()))
+        key: counts
+        for key, counts in results.counts.items()
+        if str(Path(key[0]).resolve()).startswith(str(source_root))
     }
     results.counts = first_party
     results.write_results(
