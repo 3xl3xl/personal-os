@@ -1,9 +1,10 @@
 """Step 17 local-private runtime composition tests."""
 from __future__ import annotations
 
+import os
+import stat
 import subprocess
 import sys
-from pathlib import Path
 
 from sqlalchemy import inspect, text
 
@@ -16,13 +17,13 @@ EXPECTED_TABLES={
 }
 
 
-def test_import_has_no_runtime_database_side_effect(tmp_path,monkeypatch):
+def test_import_has_no_runtime_database_side_effect(tmp_path):
     fake_home=tmp_path/"home"
     fake_home.mkdir()
     code="import personal_os.runtime"
     result=subprocess.run(
         [sys.executable,"-c",code],
-        env={**__import__("os").environ,"HOME":str(fake_home)},
+        env={**os.environ,"HOME":str(fake_home)},
         capture_output=True,text=True,
     )
     assert result.returncode==0,result.stderr
@@ -41,6 +42,24 @@ def test_explicit_runtime_initializes_and_migrates_explicit_temp_path(tmp_path):
             assert connection.execute(text("PRAGMA integrity_check")).scalar_one()=="ok"
     finally:
         runtime.engine.dispose()
+
+
+def test_runtime_storage_permissions_are_private(tmp_path):
+    path=tmp_path/"private"/"personal_os.db"
+    runtime=initialize_runtime(path)
+    runtime.engine.dispose()
+    assert stat.S_IMODE(path.parent.stat().st_mode)==0o700
+    assert stat.S_IMODE(path.stat().st_mode)==0o600
+
+
+def test_runtime_reasserts_private_permissions_for_existing_storage(tmp_path):
+    directory=tmp_path/"private"
+    directory.mkdir(mode=0o755)
+    path=directory/"personal_os.db"
+    path.touch(mode=0o644)
+    initialize_runtime(path).engine.dispose()
+    assert stat.S_IMODE(directory.stat().st_mode)==0o700
+    assert stat.S_IMODE(path.stat().st_mode)==0o600
 
 
 def test_runtime_session_factory_is_usable(tmp_path):
