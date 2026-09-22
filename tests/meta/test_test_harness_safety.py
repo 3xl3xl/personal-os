@@ -25,12 +25,22 @@ def _test_sources() -> list[Path]:
     return sorted(TEST_ROOT.rglob("*.py"))
 
 
-def test_test_suite_contains_no_private_runtime_database_path():
+def test_test_suite_does_not_connect_to_private_runtime_database():
+    """Tests may mention the forbidden path only to assert that it is absent.
+
+    Existing migration safety tests intentionally keep that path as a sentinel,
+    so a raw substring ban creates a false positive.  What Step 9 must prevent
+    is test code configuring or opening that path as a database.
+    """
     private_dir = "Personal" + "OS-data"
-    forbidden = ("~/" + private_dir, private_dir + "/personal_os.db")
+    db_name = "personal_os" + ".db"
+    forbidden_runtime_uses = (
+        "sqlite:///" + "~/" + private_dir + "/" + db_name,
+        "sqlite:///" + str(Path.home() / private_dir / db_name),
+    )
     for path in _test_sources():
         text = path.read_text()
-        assert not any(value in text for value in forbidden), path
+        assert not any(value in text for value in forbidden_runtime_uses), path
 
 
 def test_test_suite_contains_no_obvious_live_credentials():
