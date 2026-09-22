@@ -1,0 +1,23 @@
+version: "0.1"
+enforcement_layer: service
+
+operation_classes:
+  READ:
+    decision: ALLOW
+    approval_required: false
+  LOCAL_PERSONAL_DATA_WRITE:
+    decision: REQUIRE_APPROVAL
+    approval_required: true
+  EXTERNAL_WRITE:
+    decision: REQUIRE_APPROVAL
+    approval_required: true
+  FINANCIAL_EXECUTION:
+    decision: BLOCK
+    approval_required: false
+
+rules:
+  - "Permission enforcement has exactly one architectural owner: the Service Layer."
+  - "Adapters may request an operation but must not bypass or redefine this policy."
+  - "Repository code performs data access only and contains no permission policy."
+  - "Explicit approval is operation-specific input and must never be inferred."
+  - "FINANCIAL_EXECUTION remains blocked in v0.1 even when user_approved is true."
