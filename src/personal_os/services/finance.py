@@ -96,12 +96,11 @@ def available_capital(
 ) -> FinanceValueResult:
     """Q2: unprotected allocations belonging to CASH accounts."""
     as_of = to_utc(evaluation_time)
-    values: list[Money] = []
-    cash_currencies: list[str] = []
+    account_values: list[Money] = []
     for account in accounts.list_all():
         if account.account_type != AccountType.CASH:
             continue
-        cash_currencies.append(account.currency_code)
+        values: list[Money] = []
         for bucket in buckets.list_by_account(account.id):
             if bucket.is_protected:
                 continue
@@ -110,8 +109,8 @@ def available_capital(
                 for allocation in allocations.list_by_bucket(bucket.id)
                 if to_utc(allocation.created_at) <= as_of
             )
-    empty_currency = cash_currencies[0] if len(set(cash_currencies)) == 1 else None
-    value = _sum_money(values, empty_currency=empty_currency)
+        account_values.append(_sum_money(values, empty_currency=account.currency_code))
+    value = _sum_money(account_values)
     return FinanceValueResult(metric_key="available_capital", value=value, as_of=as_of)
 
 
@@ -124,22 +123,18 @@ def tax_reserved(
 ) -> FinanceValueResult:
     """Q3: allocations in every TAX_RESERVE-role bucket; names are irrelevant."""
     as_of = to_utc(evaluation_time)
-    values: list[Money] = []
-    candidate_currencies: list[str] = []
+    bucket_values: list[Money] = []
     for account in accounts.list_all():
         for bucket in buckets.list_by_account(account.id):
             if bucket.bucket_role != BucketRole.TAX_RESERVE:
                 continue
-            candidate_currencies.append(account.currency_code)
-            values.extend(
+            values = [
                 allocation.amount
                 for allocation in allocations.list_by_bucket(bucket.id)
                 if to_utc(allocation.created_at) <= as_of
-            )
-    empty_currency = (
-        candidate_currencies[0] if len(set(candidate_currencies)) == 1 else None
-    )
-    value = _sum_money(values, empty_currency=empty_currency)
+            ]
+            bucket_values.append(_sum_money(values, empty_currency=account.currency_code))
+    value = _sum_money(bucket_values)
     return FinanceValueResult(metric_key="tax_reserved", value=value, as_of=as_of)
 
 
