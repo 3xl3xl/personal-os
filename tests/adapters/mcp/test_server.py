@@ -70,3 +70,53 @@ def test_registered_tool_names_via_sdk_registry():
         "get_goal_gap",
         "get_required_revenue",
     }
+
+
+@pytest.mark.anyio
+async def test_real_mcp_protocol_lists_five_read_tools():
+    from mcp import Client
+
+    server=create_server(lambda: NeverUsedUow())
+    async with Client(server, raise_exceptions=True) as client:
+        result=await client.list_tools()
+    assert {tool.name for tool in result.tools}=={
+        "get_net_worth",
+        "get_available_capital",
+        "get_tax_reserve",
+        "get_goal_gap",
+        "get_required_revenue",
+    }
+
+
+@pytest.mark.anyio
+async def test_real_mcp_protocol_calls_tool_and_returns_structured_content():
+    from mcp import Client
+    from personal_os.domain.money import Money
+    from personal_os.domain.read_contracts import FinanceReadValue, ValueKind
+    from personal_os.services import reads
+
+    expected=FinanceReadValue(
+        metric_key="net_worth",
+        value=Money(12345,"JPY"),
+        as_of=dt.datetime(2026,9,22,12,0,tzinfo=UTC),
+        kind=ValueKind.DERIVED,
+    )
+    original=reads.get_net_worth
+    reads.get_net_worth=lambda *args, **kwargs: expected
+    try:
+        server=create_server(lambda: NeverUsedUow())
+        async with Client(server, raise_exceptions=True) as client:
+            result=await client.call_tool(
+                "get_net_worth",
+                {"evaluation_time":"2026-09-22T21:00:00+09:00"},
+            )
+    finally:
+        reads.get_net_worth=original
+
+    assert result.is_error is False
+    assert result.structured_content=={
+        "metric_key":"net_worth",
+        "value":{"amount_minor":12345,"currency_code":"JPY"},
+        "as_of":"2026-09-22T12:00:00+00:00",
+        "kind":"DERIVED",
+    }
