@@ -27,7 +27,7 @@ def _seed(sf):
     tax=uuid.uuid4()
     with UnitOfWork(sf) as uow:
         uow.accounts.add(AccountRecord(cash,"synthetic cash",AccountType.CASH,"JPY",NOW,AccountStatus.ACTIVE))
-        uow.transactions.add(TransactionRecord(uuid.uuid4(),cash,TransactionKind.INCOME,Money(100_000,"JPY"),NOW,TransactionStatus.ACTIVE,metric_key="self_generated_revenue"))
+        uow.transactions.add(TransactionRecord(uuid.uuid4(),cash,TransactionKind.NORMAL,Money(100_000,"JPY"),NOW,TransactionStatus.ACTIVE,metric_key="self_generated_revenue"))
         uow.capital_buckets.add(CapitalBucketRecord(general,cash,"synthetic general",BucketRole.GENERAL,False,CapitalBucketStatus.ACTIVE,NOW))
         uow.capital_buckets.add(CapitalBucketRecord(tax,cash,"renamed reserve",BucketRole.TAX_RESERVE,True,CapitalBucketStatus.ACTIVE,NOW))
         uow.bucket_allocations.add(BucketAllocationRecord(uuid.uuid4(),general,cash,Money(60_000,"JPY"),EntryType.ALLOCATION,NOW))
@@ -39,11 +39,11 @@ def _seed(sf):
 
 def test_all_five_reads_use_real_repositories_and_finance_core(session_factory):
     _seed(session_factory)
-    assert reads.get_net_worth(session_factory,evaluation_time=NOW).value == Money(100_000,"JPY")
-    assert reads.get_available_capital(session_factory,evaluation_time=NOW).value == Money(60_000,"JPY")
-    assert reads.get_tax_reserve(session_factory,evaluation_time=NOW).value == Money(40_000,"JPY")
-    assert reads.get_goal_gap(session_factory,metric_key="self_generated_revenue",evaluation_time=NOW).value == Money(50_000,"JPY")
-    q5=reads.get_required_revenue(session_factory,metric_key="self_generated_revenue",evaluation_time=NOW,business_timezone=ZoneInfo("Asia/Tokyo"))
+    assert reads.get_net_worth(lambda: UnitOfWork(session_factory),evaluation_time=NOW).value == Money(100_000,"JPY")
+    assert reads.get_available_capital(lambda: UnitOfWork(session_factory),evaluation_time=NOW).value == Money(60_000,"JPY")
+    assert reads.get_tax_reserve(lambda: UnitOfWork(session_factory),evaluation_time=NOW).value == Money(40_000,"JPY")
+    assert reads.get_goal_gap(lambda: UnitOfWork(session_factory),metric_key="self_generated_revenue",evaluation_time=NOW).value == Money(50_000,"JPY")
+    q5=reads.get_required_revenue(lambda: UnitOfWork(session_factory),metric_key="self_generated_revenue",evaluation_time=NOW,business_timezone=ZoneInfo("Asia/Tokyo"))
     assert q5.target == Money(120_000,"JPY")
     assert q5.actual == Money(100_000,"JPY")
     assert q5.variance == Money(20_000,"JPY")
@@ -54,9 +54,9 @@ def test_reads_do_not_commit_or_mutate(session_factory):
     _seed(session_factory)
     with UnitOfWork(session_factory) as uow:
         before=(len(uow.accounts.list_all()),sum(len(uow.transactions.list_by_account(a.id)) for a in uow.accounts.list_all()))
-    reads.get_net_worth(session_factory,evaluation_time=NOW)
-    reads.get_available_capital(session_factory,evaluation_time=NOW)
-    reads.get_tax_reserve(session_factory,evaluation_time=NOW)
+    reads.get_net_worth(lambda: UnitOfWork(session_factory),evaluation_time=NOW)
+    reads.get_available_capital(lambda: UnitOfWork(session_factory),evaluation_time=NOW)
+    reads.get_tax_reserve(lambda: UnitOfWork(session_factory),evaluation_time=NOW)
     with UnitOfWork(session_factory) as uow:
         after=(len(uow.accounts.list_all()),sum(len(uow.transactions.list_by_account(a.id)) for a in uow.accounts.list_all()))
     assert after == before
@@ -64,6 +64,6 @@ def test_reads_do_not_commit_or_mutate(session_factory):
 
 def test_integration_uses_only_temporary_fixture_database(session_factory, temp_db_path):
     _seed(session_factory)
-    result=reads.get_net_worth(session_factory,evaluation_time=NOW)
+    result=reads.get_net_worth(lambda: UnitOfWork(session_factory),evaluation_time=NOW)
     assert result.value == Money(100_000,"JPY")
     assert temp_db_path.exists()
