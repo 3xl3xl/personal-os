@@ -612,6 +612,73 @@ TARGET
 FORECAST
 ASSUMPTION
 AI INFERENCE
+
+32.1 FINANCE v0.1 — Q1-Q5 CALCULATION DEFINITIONS
+
+The following definitions are normative for Finance v0.1. They define read-time calculations only. Derived values are not persisted as a new source of truth.
+
+Q1 — NET WORTH
+
+Net Worth(currency) = sum of derived Account balances in that currency.
+
+An Account balance is derived from its ACTIVE Transaction ledger entries. CapitalBucket balances must not be added to Net Worth because buckets allocate existing cash and are not independent assets.
+
+Different currencies must never be implicitly combined. FX conversion is outside Finance v0.1.
+
+Q2 — AVAILABLE CAPITAL
+
+Available Capital(currency) = sum of current CASH-account CapitalBucket allocations in that currency where is_protected = false.
+
+Protected buckets are excluded. CapitalBucket is an allocation of existing cash and must not be added to Net Worth.
+
+Q3 — TAX RESERVED
+
+Tax Reserved(currency) = sum of current CapitalBucket allocations in that currency where bucket_role = TAX_RESERVE.
+
+Tax Reserved is determined by bucket_role, never by a user-editable bucket name. Multiple TAX_RESERVE buckets are allowed and are summed.
+
+Tax Reserved means capital currently reserved for tax. It is not estimated_tax, actual_tax, tax_liability, or tax_paid.
+
+Q4 — GOAL GAP
+
+For an evaluation_time, the active FinancialTarget is the version satisfying effective_from <= evaluation_time with the greatest effective_from.
+
+Goal Gap(currency) = Active FinancialTarget(currency) - Derived Actual(currency).
+
+For the Finance v0.1 net-worth goal, Derived Actual is Q1 Net Worth in the same currency.
+
+Goal Gap is signed and is not clamped to zero. A negative value means the target has been exceeded.
+
+Q5 — REQUIRED MONTHLY REVENUE
+
+Q5 answers: "How much self-generated revenue do I still need this month?"
+
+For an evaluation_time and an explicit business timezone, determine the target local calendar year and month. The active MonthlyTarget is the version for metric_key, year, and month satisfying effective_from <= evaluation_time with the greatest effective_from.
+
+Monthly Actual Revenue(currency) = sum of ACTIVE Transaction amounts in that target local calendar month belonging to the selected self-generated revenue metric.
+
+Monthly Revenue Variance(currency) = Active MonthlyTarget(currency) - Monthly Actual Revenue(currency).
+
+Required Monthly Revenue(currency) = max(0, Monthly Revenue Variance(currency)).
+
+Monthly Revenue Variance remains signed so target over-performance is preserved. Required Monthly Revenue is clamped at zero because it represents the remaining amount required in the current target month.
+
+Revenue, Profit, Take-Home, Available Cash, and Net Worth remain distinct concepts. Q5 must use the selected self-generated revenue metric and must not substitute profit, income, take-home pay, or net worth.
+
+The month boundary must be evaluated in the explicitly supplied business timezone. Do not hard-code Japan or any other jurisdiction/timezone.
+
+Different currencies must never be implicitly combined. A target/actual currency mismatch is an error. FX conversion is outside Finance v0.1.
+
+Long-term trajectory calculations such as dividing a long-term target gap by remaining months are not Q5. They belong to a separate planning/forecast calculation and must not be silently substituted for Required Monthly Revenue.
+
+TARGET VERSIONING
+
+FinancialTarget and MonthlyTarget are append-only planning facts. At evaluation_time, select only versions with effective_from <= evaluation_time and choose the greatest effective_from. Future versions must not affect historical or current evaluation.
+
+FACT / DERIVED VALUE BOUNDARY
+
+Accounts, Transactions, CapitalBuckets, BucketAllocations, FinancialTargets, and MonthlyTargets are stored facts/planning records. Net Worth, Available Capital, Tax Reserved, Goal Gap, Monthly Revenue Variance, and Required Monthly Revenue are derived at read time and must not be persisted as replacement facts.
+
 33. CLAUDE CODE OPERATING INSTRUCTIONS
 Do not attempt to implement the entire Personal OS in one pass.
 Before modifying architecture:
