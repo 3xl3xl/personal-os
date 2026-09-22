@@ -1,28 +1,39 @@
-"""Runtime composition for the Finance v0.1 read path.
+"""Finance read composition over a Unit-of-Work abstraction.
 
-This module is deliberately the composition root: it knows the concrete UnitOfWork
-and wires its repositories into the vendor-neutral FinanceReadContract. Business
-calculations remain in services.finance and permission checks remain in the
-contract/service boundary.
+This remains in the Service Layer without importing SQLAlchemy, SQLite, ORM
+models, or concrete repositories. The caller supplies a Unit-of-Work factory;
+production/test composition decides which persistence implementation backs it.
 """
 from __future__ import annotations
 
 import datetime as dt
 from collections.abc import Callable
-from typing import TypeVar
+from typing import Any, Protocol, TypeVar
 from zoneinfo import ZoneInfo
 
-from sqlalchemy.orm import Session, sessionmaker
-
 from personal_os.domain.read_contracts import FinanceReadValue, MonthlyRevenueReadValue
-from personal_os.repository.unit_of_work import UnitOfWork
 from personal_os.services.read_contract import FinanceReadContract, FinanceReadDependencies
 
 T = TypeVar("T")
 
 
-def _read(session_factory: sessionmaker[Session], operation: Callable[[FinanceReadContract], T]) -> T:
-    with UnitOfWork(session_factory) as uow:
+class ReadUnitOfWork(Protocol):
+    accounts: Any
+    transactions: Any
+    capital_buckets: Any
+    bucket_allocations: Any
+    financial_targets: Any
+    monthly_targets: Any
+
+    def __enter__(self) -> "ReadUnitOfWork": ...
+    def __exit__(self, exc_type, exc, tb) -> None: ...
+
+
+UnitOfWorkFactory = Callable[[], ReadUnitOfWork]
+
+
+def _read(uow_factory: UnitOfWorkFactory, operation: Callable[[FinanceReadContract], T]) -> T:
+    with uow_factory() as uow:
         contract = FinanceReadContract(
             FinanceReadDependencies(
                 accounts=uow.accounts,
@@ -36,31 +47,31 @@ def _read(session_factory: sessionmaker[Session], operation: Callable[[FinanceRe
         return operation(contract)
 
 
-def get_net_worth(session_factory: sessionmaker[Session], *, evaluation_time: dt.datetime) -> FinanceReadValue:
-    return _read(session_factory, lambda c: c.get_net_worth(evaluation_time=evaluation_time))
+def get_net_worth(uow_factory: UnitOfWorkFactory, *, evaluation_time: dt.datetime) -> FinanceReadValue:
+    return _read(uow_factory, lambda c: c.get_net_worth(evaluation_time=evaluation_time))
 
 
-def get_available_capital(session_factory: sessionmaker[Session], *, evaluation_time: dt.datetime) -> FinanceReadValue:
-    return _read(session_factory, lambda c: c.get_available_capital(evaluation_time=evaluation_time))
+def get_available_capital(uow_factory: UnitOfWorkFactory, *, evaluation_time: dt.datetime) -> FinanceReadValue:
+    return _read(uow_factory, lambda c: c.get_available_capital(evaluation_time=evaluation_time))
 
 
-def get_tax_reserve(session_factory: sessionmaker[Session], *, evaluation_time: dt.datetime) -> FinanceReadValue:
-    return _read(session_factory, lambda c: c.get_tax_reserve(evaluation_time=evaluation_time))
+def get_tax_reserve(uow_factory: UnitOfWorkFactory, *, evaluation_time: dt.datetime) -> FinanceReadValue:
+    return _read(uow_factory, lambda c: c.get_tax_reserve(evaluation_time=evaluation_time))
 
 
-def get_goal_gap(session_factory: sessionmaker[Session], *, metric_key: str, evaluation_time: dt.datetime) -> FinanceReadValue:
-    return _read(session_factory, lambda c: c.get_goal_gap(metric_key=metric_key, evaluation_time=evaluation_time))
+def get_goal_gap(uow_factory: UnitOfWorkFactory, *, metric_key: str, evaluation_time: dt.datetime) -> FinanceReadValue:
+    return _read(uow_factory, lambda c: c.get_goal_gap(metric_key=metric_key, evaluation_time=evaluation_time))
 
 
 def get_required_revenue(
-    session_factory: sessionmaker[Session],
+    uow_factory: UnitOfWorkFactory,
     *,
     metric_key: str,
     evaluation_time: dt.datetime,
     business_timezone: ZoneInfo,
 ) -> MonthlyRevenueReadValue:
     return _read(
-        session_factory,
+        uow_factory,
         lambda c: c.get_required_revenue(
             metric_key=metric_key,
             evaluation_time=evaluation_time,
