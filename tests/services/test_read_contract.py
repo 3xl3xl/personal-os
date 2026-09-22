@@ -14,7 +14,7 @@ NOW = dt.datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
 
 class Accounts:
     def list_all(self):
-        return [AccountRecord(id=uuid.uuid4(), name="synthetic", account_type=AccountType.CASH, status=AccountStatus.ACTIVE, currency_code="JPY", created_at=NOW)]
+        return [AccountRecord(id=uuid.uuid4(), name="synthetic", account_type=AccountType.CASH, status=AccountStatus.ACTIVE, currency_code="JPY", opened_at=NOW)]
 class Empty:
     def list_by_account(self, _): return []
     def list_by_bucket(self, _): return []
