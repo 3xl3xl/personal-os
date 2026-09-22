@@ -59,3 +59,14 @@ def test_adapter_defines_only_the_five_read_tools():
         )
     }
     assert names=={"get_net_worth","get_available_capital","get_tax_reserve","get_goal_gap","get_required_revenue"}
+
+
+def test_registered_tool_names_via_sdk_registry():
+    server=create_server(lambda: NeverUsedUow())
+    assert set(server._tool_manager._tools)=={
+        "get_net_worth",
+        "get_available_capital",
+        "get_tax_reserve",
+        "get_goal_gap",
+        "get_required_revenue",
+    }
