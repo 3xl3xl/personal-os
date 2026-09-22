@@ -1,0 +1,30 @@
+# Secrets & credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+*.token
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Personal / private data
+data/
+private/
+secrets/
+credentials/
+backups/
+
+# Logs & runtime data
+*.log
+logs/
+tmp/
+runtime/
+*.cache
+
+# OS files
+.DS_Store
