@@ -25,6 +25,15 @@ def main() -> int:
     exit_code = tracer.runfunc(pytest.main, ["-q"])
     results = tracer.results()
     REPORT_DIR.mkdir(exist_ok=True)
+    # Restrict the report to first-party application modules.  The stdlib
+    # trace collector sees dependencies imported by pytest too; reporting those
+    # makes the output noisy and obscures Personal OS coverage.
+    first_party = {
+        filename: counts
+        for filename, counts in results.counts.items()
+        if str(Path(filename).resolve()).startswith(str((ROOT / "src" / "personal_os").resolve()))
+    }
+    results.counts = first_party
     results.write_results(
         show_missing=True,
         summary=True,
