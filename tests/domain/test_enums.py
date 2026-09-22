@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from personal_os.domain.enums import (
+    AccountStatus,
     AccountType,
     BucketRole,
+    CapitalBucketStatus,
     EntryType,
     TransactionKind,
     TransactionStatus,
@@ -13,6 +15,10 @@ from personal_os.domain.enums import (
 
 def test_account_type_v0_1_values() -> None:
     assert {member.value for member in AccountType} == {"CASH", "INVESTMENT", "LIABILITY"}
+
+
+def test_account_status_v0_1_values() -> None:
+    assert {member.value for member in AccountStatus} == {"ACTIVE", "CLOSED"}
 
 
 def test_transaction_kind_v0_1_values() -> None:
@@ -35,6 +41,10 @@ def test_bucket_role_v0_1_values_are_exactly_general_and_tax_reserve() -> None:
     (e.g. EMERGENCY_RESERVE) exist yet.
     """
     assert {member.value for member in BucketRole} == {"GENERAL", "TAX_RESERVE"}
+
+
+def test_capital_bucket_status_v0_1_values() -> None:
+    assert {member.value for member in CapitalBucketStatus} == {"ACTIVE", "ARCHIVED"}
 
 
 def test_entry_type_v0_1_values() -> None:

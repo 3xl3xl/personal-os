@@ -6,6 +6,12 @@ Finance v0.1 Schema Design v0.3 (and, for AccountType, that same
 document's `accounts` table). No enum values are added speculatively
 ahead of an actual confirmed need — see each enum's docstring for the
 part of the Schema Design it comes from.
+
+AccountStatus and CapitalBucketStatus were added during Step 4: their
+value sets (ACTIVE/CLOSED and ACTIVE/ARCHIVED) were already confirmed
+in the Schema Design's `accounts` and `capital_buckets` tables, but
+were missed as domain enums in Step 3. This is a completion of already
+-confirmed schema semantics, not a Step 3 design change.
 """
 
 from __future__ import annotations
@@ -19,6 +25,19 @@ class AccountType(StrEnum):
     CASH = "CASH"
     INVESTMENT = "INVESTMENT"
     LIABILITY = "LIABILITY"
+
+
+class AccountStatus(StrEnum):
+    """
+    accounts.status — Finance v0.1 Schema Design §5.1.
+
+    Added in Step 4 to complete Account's confirmed schema semantics
+    as a domain enum (previously represented only as a CHECK-
+    constrained string at the persistence layer).
+    """
+
+    ACTIVE = "ACTIVE"
+    CLOSED = "CLOSED"
 
 
 class TransactionKind(StrEnum):
@@ -66,11 +85,24 @@ class BucketRole(StrEnum):
 
     Do not add further roles speculatively — a new role is added only
     once a Schema Design decision gives it actual calculation
-    semantics (per the user's explicit instruction for this step).
+    semantics.
     """
 
     GENERAL = "GENERAL"
     TAX_RESERVE = "TAX_RESERVE"
+
+
+class CapitalBucketStatus(StrEnum):
+    """
+    capital_buckets.status — Finance v0.1 Schema Design §5.3.
+
+    Added in Step 4 to complete CapitalBucket's confirmed schema
+    semantics as a domain enum (previously represented only as a
+    CHECK-constrained string at the persistence layer).
+    """
+
+    ACTIVE = "ACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class EntryType(StrEnum):
