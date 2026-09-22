@@ -12,7 +12,7 @@ from personal_os.domain.enums import (
 from personal_os.domain.money import Money
 from personal_os.domain.records import (
     AccountRecord, BucketAllocationRecord, CapitalBucketRecord,
-    FinancialTargetRecord, MonthlyTargetRecord, TransactionRecord,
+    FinancialMetricRecord, FinancialTargetRecord, MonthlyTargetRecord, TransactionRecord,
 )
 from personal_os.repository.unit_of_work import UnitOfWork
 from personal_os.services import reads
@@ -27,11 +27,12 @@ def _seed(sf):
     tax=uuid.uuid4()
     with UnitOfWork(sf) as uow:
         uow.accounts.add(AccountRecord(cash,"synthetic cash",AccountType.CASH,"JPY",NOW,AccountStatus.ACTIVE))
+        uow.financial_metrics.add(FinancialMetricRecord(uuid.uuid4(),"self_generated_revenue","Synthetic revenue",NOW))
         uow.transactions.add(TransactionRecord(uuid.uuid4(),cash,TransactionKind.NORMAL,Money(100_000,"JPY"),NOW,TransactionStatus.ACTIVE,metric_key="self_generated_revenue"))
         uow.capital_buckets.add(CapitalBucketRecord(general,cash,"synthetic general",BucketRole.GENERAL,False,CapitalBucketStatus.ACTIVE,NOW))
         uow.capital_buckets.add(CapitalBucketRecord(tax,cash,"renamed reserve",BucketRole.TAX_RESERVE,True,CapitalBucketStatus.ACTIVE,NOW))
-        uow.bucket_allocations.add(BucketAllocationRecord(uuid.uuid4(),general,cash,Money(60_000,"JPY"),EntryType.ALLOCATION,NOW))
-        uow.bucket_allocations.add(BucketAllocationRecord(uuid.uuid4(),tax,cash,Money(40_000,"JPY"),EntryType.ALLOCATION,NOW))
+        uow.bucket_allocations.add(BucketAllocationRecord(uuid.uuid4(),general,cash,Money(60_000,"JPY"),EntryType.CASH_LINKED,NOW,originating_transaction_id=None))
+        uow.bucket_allocations.add(BucketAllocationRecord(uuid.uuid4(),tax,cash,Money(40_000,"JPY"),EntryType.CASH_LINKED,NOW,originating_transaction_id=None))
         uow.financial_targets.add(FinancialTargetRecord(uuid.uuid4(),"self_generated_revenue",Money(150_000,"JPY"),NOW-dt.timedelta(days=1),NOW-dt.timedelta(days=1)))
         uow.monthly_targets.add(MonthlyTargetRecord(uuid.uuid4(),"self_generated_revenue",2026,9,Money(120_000,"JPY"),NOW-dt.timedelta(days=1),NOW-dt.timedelta(days=1)))
         uow.commit()
