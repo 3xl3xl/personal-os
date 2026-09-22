@@ -34,3 +34,6 @@ runtime/
 __pycache__/
 *.pyc
 uv-cache/
+
+# Generated Step 9 coverage output
+.coverage-report/
