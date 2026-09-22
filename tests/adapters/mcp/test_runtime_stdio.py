@@ -39,13 +39,15 @@ async def test_runtime_entrypoint_over_real_stdio_subprocess(tmp_path):
         )
 
     assert {tool.name for tool in listed.tools}==READ_TOOLS
-    assert result.is_error is False
-    assert result.structured_content=={
-        "metric_key":"net_worth",
-        "value":{"amount_minor":0,"currency_code":None},
-        "as_of":"2026-09-22T12:00:00+00:00",
-        "kind":"DERIVED",
-    }
+
+    # A brand-new runtime contains no currency-bearing facts. Finance v0.1
+    # deliberately refuses to invent JPY (or any other currency), so an empty
+    # Net Worth read is a domain error. The important Step 18 assertion is that
+    # the real child process completed MCP tools/list + tools/call and surfaced
+    # that domain condition through the protocol rather than failing transport.
+    assert result.is_error is True
+    assert result.structured_content is None
+    assert result.content
 
     db=fake_home/"PersonalOS-data"/"personal_os.db"
     assert db.is_file()
