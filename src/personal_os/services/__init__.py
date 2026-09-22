@@ -14,6 +14,14 @@ from personal_os.services.finance import (
     required_monthly_revenue,
     tax_reserved,
 )
+from personal_os.services.permissions import (
+    OperationClass,
+    PermissionDecision,
+    PermissionDeniedError,
+    PermissionResult,
+    evaluate_permission,
+    require_permission,
+)
 
 __all__ = [
     "NoFinancialDataError",
@@ -23,4 +31,10 @@ __all__ = [
     "net_worth",
     "required_monthly_revenue",
     "tax_reserved",
+    "OperationClass",
+    "PermissionDecision",
+    "PermissionDeniedError",
+    "PermissionResult",
+    "evaluate_permission",
+    "require_permission",
 ]
