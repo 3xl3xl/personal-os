@@ -3,6 +3,9 @@
 Status: Accepted
 Date: 2026-09-23
 
+Follow-up: ADR-013 adds the three provenance columns and the locally approved
+MCP path. The Step 19 scope/gap statements below record the original decision.
+
 ## Decision
 
 Step 19 introduces only `FinanceWriteContract.add_transaction`, with immutable

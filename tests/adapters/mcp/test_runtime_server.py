@@ -49,11 +49,11 @@ def test_runtime_entrypoint_uses_stdio_run_and_disposes_engine(monkeypatch,tmp_p
 
     server,runtime=create_runtime_server(tmp_path/"personal_os.db")
     called=[]
-    monkeypatch.setattr(entrypoint,"create_runtime_server",lambda:(server,runtime))
+    monkeypatch.setattr(entrypoint,"create_runtime_server",lambda *args, **kwargs:(server,runtime))
     monkeypatch.setattr(server,"run",lambda:called.append("run"))
     disposed=[]
     monkeypatch.setattr(runtime.engine,"dispose",lambda:disposed.append("dispose"))
 
-    assert entrypoint.main()==0
+    assert entrypoint.main([])==0
     assert called==["run"]
     assert disposed==["dispose"]

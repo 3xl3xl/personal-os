@@ -53,3 +53,23 @@ async def test_runtime_entrypoint_over_real_stdio_subprocess(tmp_path):
     assert db.is_file()
     assert db.stat().st_mode & 0o777 == 0o600
     assert db.parent.stat().st_mode & 0o777 == 0o700
+
+
+@pytest.mark.anyio
+async def test_write_enabled_stdio_lists_tool_without_dialog(tmp_path):
+    database = tmp_path / "explicit-runtime.db"
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "personal_os.adapters.mcp.runtime_server", "--enable-writes",
+              "--database-path", str(database)],
+        env=dict(os.environ),
+    )
+    async with Client(params, raise_exceptions=False) as client:
+        listed = await client.list_tools()
+        # Invalid input must terminate before any OS dialog or DB mutation.
+        response = await client.call_tool("add_transaction", {
+            "id": "not-a-uuid", "account_id": "not-a-uuid", "amount_minor": 1,
+            "currency_code": "JPY", "occurred_at": "2026-01-01T00:00:00Z", "reason": "synthetic",
+        })
+    assert {tool.name for tool in listed.tools} == READ_TOOLS | {"add_transaction"}
+    assert response.structured_content["error"]["code"] == "INVALID_INPUT"

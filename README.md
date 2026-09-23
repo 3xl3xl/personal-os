@@ -10,16 +10,16 @@ Personal OS is a long-term, model-agnostic personal operating system — a priva
 
 ## Status
 
-**Step 19 — approved local transaction write** adds a vendor-neutral Service
-contract for one NORMAL ledger fact and its atomic audit record. Core Finance,
-repositories, migrations, backup/restore, and the read-only runtime MCP entrypoint
-are implemented. See [ADR-012](docs/adr/ADR-012-approved-transaction-write.md) for
-approval, composition, scope, and the outstanding Audit schema fields.
+**Step 20 — locally approved MCP writes and audit provenance** is implemented.
+The default MCP runtime exposes five read tools. `--enable-writes` adds only
+`add_transaction`, requiring local macOS confirmation for every write.
 
-The runtime MCP tool surface remains read-only. Step 19 tests use synthetic data
-and temporary SQLite only; this change does not seed personal data.
+Audit records now support `model_or_agent`, `tool`, and `source`. Migration keeps
+unknown historical values NULL; new writes supply all three. See
+[ADR-013](docs/adr/ADR-013-mcp-write-and-audit-provenance.md) for startup, backup,
+approval, and the distinction between database initialization and personal seed.
 
-Run the regression suite with `uv run pytest -q`.
+Tests use synthetic data and temporary SQLite. Run them with `uv run pytest -q`.
 
 ## Source of truth
 

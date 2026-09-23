@@ -79,6 +79,8 @@ class FinanceWriteContract:
             reason=context.reason,
             approval_status=ApprovalStatus.EXPLICITLY_APPROVED.value,
             occurred_at=to_utc(self._clock()),
+            model_or_agent=context.model_or_agent,
+            tool="add_transaction", source=context.source,
         )
         result = AddTransactionResult(transaction=transaction, audit_id=audit.id)
         with self._uow_factory() as uow:

@@ -436,6 +436,16 @@ existing schema remains unchanged. The §22 model_or_agent, tool, and source
 fields remain an explicit gap for a future Audit schema revision; they must not
 be inferred or packed into reason. See ADR-012 for the contract and test boundary.
 
+22.2 AUDIT PROVENANCE AND MCP WRITE FOLLOW-UP
+
+The additive audit_provenance_v1 revision supplies model_or_agent, tool and
+source. Historical unknown provenance remains NULL. New approved transaction
+writes require nonblank provenance, with tool fixed to add_transaction.
+An explicitly write-enabled local MCP runtime may expose add_transaction only
+through request-bound human confirmation; client-provided approval booleans
+are not accepted. All Step 19 atomicity and permission rules remain in force.
+See ADR-013 for the local approval and migration boundaries.
+
 23. MCP — INITIAL TOOLS
 Start READ-heavy.
 Finance:

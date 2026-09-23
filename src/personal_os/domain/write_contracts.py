@@ -59,8 +59,10 @@ class WriteContext(BaseModel):
     actor: Annotated[str, Field(min_length=1)]
     reason: Annotated[str, Field(min_length=1)]
     approved: bool = False
+    model_or_agent: Annotated[str, Field(min_length=1)]
+    source: Annotated[str, Field(min_length=1)]
 
-    @field_validator("actor", "reason")
+    @field_validator("actor", "reason", "model_or_agent", "source")
     @classmethod
     def nonblank(cls, value: str) -> str:
         if not value.strip():

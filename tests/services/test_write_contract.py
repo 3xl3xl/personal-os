@@ -31,7 +31,7 @@ def request(**changes):
 
 
 def context(**changes):
-    return WriteContext(**(dict(actor="synthetic operator", reason="synthetic fact", approved=True) | changes))
+    return WriteContext(**(dict(actor="synthetic operator", reason="synthetic fact", approved=True, model_or_agent="synthetic-agent", source="synthetic-test") | changes))
 
 
 class FakeUow:
@@ -114,7 +114,7 @@ def test_unapproved_stops_before_factory_or_clock():
     service = writes.FinanceWriteContract(forbidden, clock=forbidden, audit_id_factory=forbidden)
     with pytest.raises(PermissionDeniedError):
         service.add_transaction(request(), context=context(approved=False))
-    assert WriteContext(actor="synthetic", reason="synthetic").approved is False
+    assert WriteContext(actor="synthetic", reason="synthetic", model_or_agent="synthetic-agent", source="synthetic-test").approved is False
 
 
 @pytest.mark.parametrize("phase", ["transaction", "audit", "commit"])
@@ -214,3 +214,21 @@ def test_service_and_domain_have_no_orm_or_adapter_imports():
 def test_money_coercion_rejected(value):
     with pytest.raises((ValueError, ValidationError)):
         request(amount=Money(value, "JPY"))
+
+
+@pytest.mark.parametrize("field", ["model_or_agent", "source"])
+def test_new_audit_provenance_is_required(field):
+    values = context().model_dump()
+    del values[field]
+    with pytest.raises(ValidationError):
+        WriteContext(**values)
+    with pytest.raises(ValidationError):
+        context(**{field: " "})
+
+
+def test_new_audit_provenance_is_separate_from_reason():
+    uow = FakeUow()
+    contract(uow).add_transaction(request(), context=context())
+    audit = uow.saved_audit[0]
+    assert (audit.model_or_agent, audit.tool, audit.source) == ("synthetic-agent", "add_transaction", "synthetic-test")
+    assert audit.reason == "synthetic fact"

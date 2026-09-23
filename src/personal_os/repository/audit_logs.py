@@ -34,6 +34,7 @@ class AuditLogRepository:
             reason=record.reason,
             approval_status=record.approval_status,
             occurred_at=to_storage(record.occurred_at),
+            model_or_agent=record.model_or_agent, tool=record.tool, source=record.source,
         )
         self._session.add(row)
         self._session.flush()
@@ -56,4 +57,5 @@ def _to_record(row: AuditLog) -> AuditLogRecord:
         old_value=row.old_value,
         new_value=row.new_value,
         reason=row.reason,
+        model_or_agent=row.model_or_agent, tool=row.tool, source=row.source,
     )

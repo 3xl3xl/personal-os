@@ -147,3 +147,7 @@ class AuditLogRecord:
     old_value: str | None = None
     new_value: str | None = None
     reason: str | None = None
+
+    model_or_agent: str | None = None
+    tool: str | None = None
+    source: str | None = None

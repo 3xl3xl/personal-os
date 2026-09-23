@@ -51,7 +51,7 @@ def test_migration_files_never_call_create_all(migrations_dir):
         )
 
 
-def test_migration_files_use_op_create_table_directly(migrations_dir):
+def test_migration_files_use_explicit_schema_operations(migrations_dir):
     for path in _migration_files(migrations_dir):
         tree = ast.parse(path.read_text(), filename=str(path))
         called_attrs = {
@@ -59,7 +59,7 @@ def test_migration_files_use_op_create_table_directly(migrations_dir):
             for node in ast.walk(tree)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
         }
-        assert "create_table" in called_attrs, f"{path.name}: expected explicit op.create_table() calls"
+        assert {"create_table", "add_column"} & called_attrs, f"{path.name}: expected explicit Alembic schema operations"
 
 
 def test_no_tax_rule_table_introduced_by_migration(migrations_dir):
