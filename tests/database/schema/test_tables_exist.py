@@ -13,6 +13,7 @@ EXPECTED_TABLES = {
     "financial_targets",
     "monthly_targets",
     "audit_logs",
+    "external_transaction_links",
 }
 
 

@@ -20,6 +20,7 @@ from personal_os.database.schema.accounts import Account
 from personal_os.database.schema.audit_logs import AuditLog
 from personal_os.database.schema.base import Base
 from personal_os.database.schema.bucket_allocations import BucketAllocation
+from personal_os.database.schema.external_transaction_links import ExternalTransactionLink
 from personal_os.database.schema.capital_buckets import CapitalBucket
 from personal_os.database.schema.financial_metrics import FinancialMetric
 from personal_os.database.schema.financial_targets import FinancialTarget
@@ -32,6 +33,7 @@ __all__ = [
     "Transaction",
     "CapitalBucket",
     "BucketAllocation",
+    "ExternalTransactionLink",
     "FinancialMetric",
     "FinancialTarget",
     "MonthlyTarget",

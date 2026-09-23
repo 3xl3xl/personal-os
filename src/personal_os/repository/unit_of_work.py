@@ -22,6 +22,7 @@ from personal_os.repository.accounts import AccountRepository
 from personal_os.repository.audit_logs import AuditLogRepository
 from personal_os.repository.bucket_allocations import BucketAllocationRepository
 from personal_os.repository.capital_buckets import CapitalBucketRepository
+from personal_os.repository.external_transaction_links import ExternalTransactionLinkRepository
 from personal_os.repository.financial_metrics import FinancialMetricRepository
 from personal_os.repository.financial_targets import FinancialTargetRepository
 from personal_os.repository.monthly_targets import MonthlyTargetRepository
@@ -60,6 +61,7 @@ class UnitOfWork:
         self.financial_targets = FinancialTargetRepository(self.session)
         self.monthly_targets = MonthlyTargetRepository(self.session)
         self.audit_logs = AuditLogRepository(self.session)
+        self.external_transaction_links = ExternalTransactionLinkRepository(self.session)
         return self
 
     def __exit__(

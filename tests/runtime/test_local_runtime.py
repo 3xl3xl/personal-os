@@ -13,7 +13,7 @@ from personal_os.runtime import initialize_runtime, sqlite_url
 EXPECTED_TABLES={
     "accounts","audit_logs","financial_metrics","capital_buckets",
     "financial_targets","monthly_targets","transactions","bucket_allocations",
-    "alembic_version",
+    "external_transaction_links","alembic_version",
 }
 
 

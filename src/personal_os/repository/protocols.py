@@ -21,11 +21,13 @@ from __future__ import annotations
 import uuid
 from typing import Protocol
 
+from personal_os.domain.enums import ExternalSource
 from personal_os.domain.records import (
     AccountRecord,
     AuditLogRecord,
     BucketAllocationRecord,
     CapitalBucketRecord,
+    ExternalTransactionLinkRecord,
     FinancialMetricRecord,
     FinancialTargetRecord,
     MonthlyTargetRecord,
@@ -76,3 +78,15 @@ class MonthlyTargetRepositoryProtocol(Protocol):
 class AuditLogRepositoryProtocol(Protocol):
     def add(self, record: AuditLogRecord) -> None: ...
     def list_all(self) -> list[AuditLogRecord]: ...
+
+
+class ExternalTransactionLinkRepositoryProtocol(Protocol):
+    def add(self, record: ExternalTransactionLinkRecord) -> None: ...
+    def find(
+        self,
+        *,
+        source: ExternalSource,
+        external_office_id: str,
+        external_account_id: str,
+        external_transaction_id: str,
+    ) -> ExternalTransactionLinkRecord | None: ...

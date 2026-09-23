@@ -119,3 +119,15 @@ class EntryType(StrEnum):
 
     CASH_LINKED = "CASH_LINKED"
     REALLOCATION = "REALLOCATION"
+
+
+class ExternalSource(StrEnum):
+    """Which authorized external data provider a RawBankTransaction came
+    from -- ADR-014 (freee read-only integration).
+
+    v0.1 defines exactly one value, added only once an actual integration
+    (freee) confirmed its normalization/dedup rules -- same discipline as
+    BucketRole above: no speculative future providers.
+    """
+
+    FREEE = "FREEE"

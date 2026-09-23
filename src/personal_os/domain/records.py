@@ -54,6 +54,7 @@ from personal_os.domain.enums import (
     BucketRole,
     CapitalBucketStatus,
     EntryType,
+    ExternalSource,
     TransactionKind,
     TransactionStatus,
 )
@@ -151,3 +152,20 @@ class AuditLogRecord:
     model_or_agent: str | None = None
     tool: str | None = None
     source: str | None = None
+@dataclass(frozen=True, slots=True)
+class ExternalTransactionLinkRecord:
+    """external_transaction_links -- ADR-014 (freee read-only integration).
+
+    Append-only dedup identity: exactly one row per
+    (source, external_office_id, external_account_id,
+    external_transaction_id), enforced by a UNIQUE constraint at the
+    Repository/DB layer, not just here.
+    """
+
+    id: uuid.UUID
+    source: ExternalSource
+    external_office_id: str
+    external_account_id: str
+    external_transaction_id: str
+    transaction_id: uuid.UUID
+    imported_at: dt.datetime
