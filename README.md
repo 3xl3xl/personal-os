@@ -10,7 +10,16 @@ Personal OS is a long-term, model-agnostic personal operating system — a priva
 
 ## Status
 
-Currently at **v0.1 — bootstrap stage**. This repository contains only the foundational scaffold (this README, a specification placeholder, a security policy, and safe defaults). No application code, database, or MCP server has been implemented yet.
+**Step 19 — approved local transaction write** adds a vendor-neutral Service
+contract for one NORMAL ledger fact and its atomic audit record. Core Finance,
+repositories, migrations, backup/restore, and the read-only runtime MCP entrypoint
+are implemented. See [ADR-012](docs/adr/ADR-012-approved-transaction-write.md) for
+approval, composition, scope, and the outstanding Audit schema fields.
+
+The runtime MCP tool surface remains read-only. Step 19 tests use synthetic data
+and temporary SQLite only; this change does not seed personal data.
+
+Run the regression suite with `uv run pytest -q`.
 
 ## Source of truth
 

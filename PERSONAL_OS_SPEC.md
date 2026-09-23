@@ -418,6 +418,24 @@ reason
 approval_status
 source
 Writes should be reversible where practical.
+
+22.1 STEP 19 — MINIMAL APPROVED LOCAL FACT WRITE
+
+Step 19 exposes only a vendor-neutral add_transaction Service contract for a
+single ACTIVE NORMAL transaction. It requires explicit approval under
+LOCAL_PERSONAL_DATA_WRITE before any UoW is opened. An unapproved request creates
+neither Transaction nor AuditLog. Approved writes append Transaction and AuditLog
+in the same UoW, then commit once; rejected/failed transactions roll back both.
+Transfers, reallocations, corrections, derived values, and additional write tools
+are outside this step.
+
+Successful audit approval_status is EXPLICITLY_APPROVED, not REQUIRE_APPROVAL.
+All existing audit payload fields are filled, with old_value=null and new_value
+a deterministic canonical representation of the complete written fact. The
+existing schema remains unchanged. The §22 model_or_agent, tool, and source
+fields remain an explicit gap for a future Audit schema revision; they must not
+be inferred or packed into reason. See ADR-012 for the contract and test boundary.
+
 23. MCP — INITIAL TOOLS
 Start READ-heavy.
 Finance:
