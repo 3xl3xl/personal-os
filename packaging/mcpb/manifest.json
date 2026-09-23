@@ -1,0 +1,26 @@
+{
+  "manifest_version": "0.3",
+  "name": "personal-os",
+  "display_name": "Personal OS",
+  "version": "1.0.1",
+  "description": "Local Personal OS MCP server: Finance read tools plus locally human-approved writes (Account, Transaction, Metric, Target, freee-mcp-mediated import). Runs the user's own personal-os git checkout via uv; no code or data is bundled in this extension.",
+  "long_description": "This extension does not contain Personal OS's application code. It bundles a single thin launcher script that execs `uv --directory <repo> run python -m personal_os.adapters.mcp.runtime_server --enable-writes`, so it always runs whatever is currently checked out in the user's personal-os git repository. All personal data lives outside both the git repo and this extension, in ~/PersonalOS-data/, per the project's SECURITY.md. Every write tool requires a local macOS confirmation dialog before anything is committed.",
+  "author": {
+    "name": "3xl"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "server/launch.py",
+    "mcp_config": {
+      "command": "/usr/bin/python3",
+      "args": [
+        "${__dirname}/server/launch.py"
+      ]
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin"
+    ]
+  }
+}
