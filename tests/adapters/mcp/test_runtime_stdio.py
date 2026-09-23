@@ -71,5 +71,5 @@ async def test_write_enabled_stdio_lists_tool_without_dialog(tmp_path):
             "id": "not-a-uuid", "account_id": "not-a-uuid", "amount_minor": 1,
             "currency_code": "JPY", "occurred_at": "2026-01-01T00:00:00Z", "reason": "synthetic",
         })
-    assert {tool.name for tool in listed.tools} == READ_TOOLS | {"add_transaction"}
+    assert {tool.name for tool in listed.tools} == READ_TOOLS | {"add_transaction", "add_account", "import_bank_transactions", "add_metric", "add_financial_target", "add_monthly_target"}
     assert response.structured_content["error"]["code"] == "INVALID_INPUT"

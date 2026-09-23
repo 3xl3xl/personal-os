@@ -12,10 +12,25 @@ from pathlib import Path
 
 from mcp.server import MCPServer
 
+from personal_os.adapters.mcp.account_tools import register_account_tools
+from personal_os.adapters.mcp.import_tools import register_import_tools
+from personal_os.adapters.mcp.metric_tools import register_metric_tools
 from personal_os.adapters.mcp.server import create_server
+from personal_os.adapters.mcp.target_tools import register_target_tools
 from personal_os.adapters.mcp.write_tools import register_write_tools
+from personal_os.approval._account import confirm_account
+from personal_os.approval._batch_import import confirm_import_batch
+from personal_os.approval._metric import confirm_metric
+from personal_os.approval._target import confirm_financial_target, confirm_monthly_target
 from personal_os.approval.macos import confirm_transaction
+from personal_os.services.account_write_contract import AccountWriteContract
+from personal_os.services.approved_account_write import ApprovedAccountWrite
+from personal_os.services.approved_import_write import ApprovedImportWrite
+from personal_os.services.approved_metric_write import ApprovedMetricWrite
+from personal_os.services.approved_target_write import ApprovedTargetWrite
 from personal_os.services.approved_write import ApprovedTransactionWrite
+from personal_os.services.metric_write_contract import MetricWriteContract
+from personal_os.services.target_write_contract import TargetWriteContract
 from personal_os.services.write_contract import FinanceWriteContract
 from personal_os.repository.unit_of_work import UnitOfWork
 from personal_os.runtime import DEFAULT_DATABASE_PATH, Runtime, initialize_runtime
@@ -34,6 +49,30 @@ def create_runtime_server(
             model_or_agent="personal-os-mcp", source="mcp:stdio",
         )
         register_write_tools(server, service)
+        account_service = ApprovedAccountWrite(
+            AccountWriteContract(lambda: UnitOfWork(runtime.session_factory)),
+            confirm_account, actor=getpass.getuser(),
+            model_or_agent="personal-os-mcp", source="mcp:stdio",
+        )
+        register_account_tools(server, account_service)
+        import_service = ApprovedImportWrite(
+            lambda: UnitOfWork(runtime.session_factory),
+            confirm_import_batch, actor=getpass.getuser(),
+            model_or_agent="personal-os-mcp", source="mcp:stdio",
+        )
+        register_import_tools(server, import_service)
+        metric_service = ApprovedMetricWrite(
+            MetricWriteContract(lambda: UnitOfWork(runtime.session_factory)),
+            confirm_metric, actor=getpass.getuser(),
+            model_or_agent="personal-os-mcp", source="mcp:stdio",
+        )
+        register_metric_tools(server, metric_service)
+        target_service = ApprovedTargetWrite(
+            TargetWriteContract(lambda: UnitOfWork(runtime.session_factory)),
+            confirm_financial_target, confirm_monthly_target, actor=getpass.getuser(),
+            model_or_agent="personal-os-mcp", source="mcp:stdio",
+        )
+        register_target_tools(server, target_service)
     return server, runtime
 
 
