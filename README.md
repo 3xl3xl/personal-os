@@ -94,6 +94,9 @@ UI remain outside the initial v0.1 scope.
 
 ### Next verification
 
+Follow the ordered [live connection verification runbook](docs/LIVE_CONNECTION_VERIFICATION.md)
+for commands, acceptance criteria, authentication boundaries, and recovery steps.
+
 Before treating the system as ready for real-data use:
 
 1. Verify a private backup and restore procedure before runtime migration.
