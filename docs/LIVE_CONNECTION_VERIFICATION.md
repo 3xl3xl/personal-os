@@ -270,7 +270,8 @@ import入力にはmetric_keyがない。銀行入金だけでQ5の自営売上�
   importでは既commit行の有無も確認する。
 - WRITE_FAILED / 通信切断: 保存結果不明。ID、外部ID、target versionキー、
   auditをread-onlyで確認するまで再送しない。
-- 誤った入力: correction/deleteツールはない。黙って履歴を変更しない。
+- 誤った入力: 汎用correction/deleteツールはない。黙って履歴を変更しない。
+  新しいcash-linked writeとbucket振替はADR-019の承認付き相殺追記が可能。
   targetは正しい後続versionを承認付きで追加できるが、過去versionは残る。
 - 復元が必要: 全接続を停止し、現状を別snapshotに保存。
   正しいbackupをまず別ファイルにrestoreして照合する。

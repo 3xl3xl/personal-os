@@ -77,15 +77,18 @@ See:
 [ADR-014](docs/adr/ADR-014-freee-read-integration.md),
 [ADR-015](docs/adr/ADR-015-account-write-contract.md),
 [ADR-016](docs/adr/ADR-016-freee-mcp-mediated-import.md),
-[ADR-017](docs/adr/ADR-017-metric-and-target-write-contracts.md), and
-[ADR-018](docs/adr/ADR-018-opening-balance-write-contract.md).
+[ADR-017](docs/adr/ADR-017-metric-and-target-write-contracts.md),
+[ADR-018](docs/adr/ADR-018-opening-balance-write-contract.md), and
+[ADR-019](docs/adr/ADR-019-capital-bucket-write-contract.md).
 
 ### Not yet implemented / outside the current runtime
 
 The runtime does not expose the full tool list proposed in the
 specification. General Goal/Opportunity writes, Account updates or
-closure, transaction corrections/voiding/transfers, and CapitalBucket
-or allocation writes are not exposed by the current MCP runtime.
+closure, generic transaction corrections/voiding/transfers, bucket metadata
+updates/archive, and allocation of previously recorded cash transactions are
+not exposed by the current MCP runtime. New cash-linked allocations and
+same-account reallocations are supported as described above.
 
 The current tool surface also does not provide the full business
 pipeline, deal-count calculation, forecasting, or weekly/monthly review
