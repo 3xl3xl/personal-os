@@ -40,6 +40,9 @@ Starting the runtime with `--enable-writes` additionally exposes:
 - `add_financial_target`
 - `add_monthly_target`
 - `import_bank_transactions`
+- `add_capital_bucket`
+- `add_cash_linked_allocation` (new transaction + full allocation, atomic)
+- `reallocate_capital` (append-only same-account pair)
 
 Writes require request-bound local macOS human confirmation; an
 AI-client-supplied approval boolean is not proof of consent. Target writes
@@ -129,3 +132,8 @@ financial profile has been verified.
 Detailed specifications live in [`PERSONAL_OS_SPEC.md`](./PERSONAL_OS_SPEC.md). That document — not this README — is the source of truth for architecture and design decisions.
 
 See [`SECURITY.md`](./SECURITY.md) for the security and data-handling policy.
+
+Bucket writes follow [ADR-019](docs/adr/ADR-019-capital-bucket-write-contract.md).
+Cash-linked allocation creates a NEW transaction; it must not be used to allocate
+existing opening balances/imported transactions. Synthetic Q2/Q3 verification is
+documented in [the verification procedure](docs/LIVE_CONNECTION_VERIFICATION.md#33-q2q3を合成データだけで検証する).

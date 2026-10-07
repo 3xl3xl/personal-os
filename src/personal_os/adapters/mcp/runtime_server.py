@@ -12,6 +12,10 @@ from pathlib import Path
 
 from mcp.server import MCPServer
 
+from personal_os.adapters.mcp.bucket_tools import register_bucket_tools
+from personal_os.approval._bucket import confirm_bucket
+from personal_os.services.bucket_write_contract import ApprovedBucketWrite, BucketWriteContract
+
 from personal_os.adapters.mcp.account_tools import register_account_tools
 from personal_os.adapters.mcp.import_tools import register_import_tools
 from personal_os.adapters.mcp.metric_tools import register_metric_tools
@@ -47,6 +51,11 @@ def create_runtime_server(
     runtime = initialize_runtime(database_path)
     server = create_server(lambda: UnitOfWork(runtime.session_factory))
     if enable_writes:
+        register_bucket_tools(server, ApprovedBucketWrite(
+            BucketWriteContract(lambda: UnitOfWork(runtime.session_factory)),
+            confirm_bucket, actor=getpass.getuser(),
+            model_or_agent="personal-os-mcp", source="mcp:stdio",
+        ))
         service = ApprovedTransactionWrite(
             FinanceWriteContract(lambda: UnitOfWork(runtime.session_factory)),
             confirm_transaction, actor=getpass.getuser(),

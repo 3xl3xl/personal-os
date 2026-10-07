@@ -4,9 +4,8 @@ BucketAllocation repository -- Repository Layer access to the
 Design Sec.5.4).
 
 No update/delete method: this table is append-only by design (Step 4
-docstring). No get-by-id method either -- nothing in Step 6's scope
-needs single-row lookup by allocation id; list_by_bucket() is what a
-future bucket-balance derivation actually needs.
+docstring). get() supports stable write-ID collision checks (ADR-019);
+list_by_bucket() supports bucket balance derivation.
 """
 
 from __future__ import annotations
@@ -40,6 +39,10 @@ class BucketAllocationRepository:
         )
         self._session.add(row)
         self._session.flush()
+
+    def get(self, allocation_id: uuid.UUID) -> BucketAllocationRecord | None:
+        row = self._session.get(BucketAllocation, allocation_id)
+        return None if row is None else _to_record(row)
 
     def list_by_bucket(self, bucket_id: uuid.UUID) -> list[BucketAllocationRecord]:
         stmt = (
