@@ -1,6 +1,6 @@
 # Personal OS — 実接続検証手順
 
-対象: default branch の Finance 実装、ADR-009 / 013–018。
+対象: default branch の Finance 実装、ADR-009 / 013–019。
 この文書は実行手順であり、実機・実データ検証の完了報告ではない。
 結果、口座名、残高、外部ID、認証情報は Git に保存しない。
 
@@ -90,7 +90,8 @@ checkout を作業ディレクトリにするか、次の command / args を使�
 - read: get_net_worth / get_available_capital / get_tax_reserve /
   get_goal_gap / get_required_revenue の5つ
 - write: add_account / add_transaction / add_opening_balance / add_metric /
-  add_financial_target / add_monthly_target / import_bank_transactions の7つ
+  add_financial_target / add_monthly_target / import_bank_transactions /
+  add_capital_bucket / add_cash_linked_allocation / reallocate_capital の10個
 - 同じ設定で --enable-writes を外すと read 5つのみ
 - 合成DBの add_account をキャンセルすると APPROVAL_REQUIRED、
   同じIDを明示的に承認して再提案できる
@@ -114,7 +115,7 @@ mcpb pack . ../../personal-os.mcpb
 ```
 
 Claude Desktop の Extensions から生成した .mcpb をインストールする。
-合格: 接続が有効、12ツールが見える、意図したcheckout/DBを使用。
+合格: 接続が有効、15ツールが見える、意図したcheckout/DBを使用。
 ランチャーは /usr/bin/python3 と既知の場所の uv を使用する。
 別のcheckoutパスなら server/launch.py の PERSONAL_OS_REPO を確認・変更して再pack。
 通常のアプリコード更新だけならpackし直す必要はない。
@@ -193,10 +194,46 @@ Q4は現在、metric_keyに対応する目標と純資産を比較する。任�
 0という結果だけではデータ入力完了を証明しない。
 複数通貨を暗黙に合算しない。通貨不一致は換算せず検証停止。
 
-Q2/Q3に必要なbucket/allocationの書き込みMCPは未実装。
-既存データが不足する場合は「入力経路不足で未検証」と記録し、
-直接DB書き込みで回避しない。Q3のbucket自体がなければ0でなく
+Q2/Q3の合成検証は下記§3.3の承認付きMCP経路を使用する。
+既存取引・開始残高を後から割り当てる経路は未実装。既存データの不足が
+この制約に該当する場合は「入力経路不足で未検証」と記録し、
+直接DB書き込みや新しい取引の二重登録で回避しない。Q3のbucket自体がなければ0でなく
 NoFinancialDataErrorになり得る。税額推計の合格とは区別する。
+
+### 3.3 Q2/Q3を合成データだけで検証する
+
+必ず§1.2の新しい合成DBを使い、実DBに接続しない。自動検証:
+
+```sh
+uv run pytest -q tests/integration/test_bucket_write.py tests/approval/test_bucket_dialog.py tests/adapters/mcp/test_runtime_stdio.py
+```
+
+合格: 終了コード0。以下の手動MCP検証も実データを使わない。
+各記号には新しいUUIDを一つずつ割り当て、応答と対応をローカルに記録する。
+共通 `reason="synthetic Q2/Q3 verification"`、日時はtimezone付き。
+
+1. `add_account(id=A, name="SYNTHETIC", account_type="CASH", currency_code="JPY", opened_at="2026-10-07T00:00:00Z", reason=...)`。
+2. `add_capital_bucket(id=B, account_id=A, name="GENERAL", bucket_role="GENERAL", is_protected=false, created_at="2026-10-07T00:00:00Z", reason=...)`。
+3. `add_capital_bucket(id=T, account_id=A, name="arbitrary name", bucket_role="TAX_RESERVE", is_protected=true, created_at="2026-10-07T00:00:00Z", reason=...)`。
+4. `add_cash_linked_allocation(id=C, bucket_id=B, amount_minor=100000, currency_code="JPY", created_at="2026-10-07T00:00:00Z", reason=...)`。
+   まず取消→APPROVAL_REQUIRED。同じ引数で承認→replayed=false。
+   これは新しいNORMAL取引も作る。add_transaction等で同じ金額を追加しない。
+5. `evaluation_time="2026-10-07T00:00:00Z"`でQ1=100000、Q2=100000、Q3=0 JPY。
+6. Cの全引数（reason含む）をそのまま再送して承認→replayed=true、audit_id同一、数値不変。
+   Cのamount_minorだけ変更して承認→INVALID_INPUT、数値不変。
+7. `reallocate_capital(id=R, from_bucket_id=B, to_bucket_id=T, amount_minor=30000, currency_code="JPY", created_at="2026-10-08T00:00:00Z", reason=...)`。
+   承認後、10/7時点は不変。10/8時点はQ1=100000、Q2=70000、Q3=30000 JPY。
+8. 新しいIDでT→B、同額、10/9日時の逆振替を承認する。reasonにRを明記する。
+   10/8値は不変、10/9値はQ1=100000、Q2=100000、Q3=0。
+9. 合成DBを再接続して同じas-of値を確認する。監査をread-onlyで確認:
+   actor/reason/model_or_agent/source/tool、EXPLICITLY_APPROVED、完全なnew_value、
+   元の履歴と相殺2行、各操作一つのaudit receiptがあること。
+
+上記のexpected値は合成テスト用であり本人の残高・税額ではない。
+複数TAX_RESERVE bucketは名前に依存せず合算される。保護フラグのみでQ2除外。
+未割当の既存開始残高をこのツールで埋めるとQ1を二重計上するため禁止。
+WRITE_FAILED/通信断では監査とIDを確認し、再試行は元の全引数のみ。
+取消後は本人の再提案の意思がある場合だけ再試行する。
 
 ## 4. freeeログイン・両MCP接続が必要な検証
 
@@ -233,7 +270,8 @@ import入力にはmetric_keyがない。銀行入金だけでQ5の自営売上�
   importでは既commit行の有無も確認する。
 - WRITE_FAILED / 通信切断: 保存結果不明。ID、外部ID、target versionキー、
   auditをread-onlyで確認するまで再送しない。
-- 誤った入力: correction/deleteツールはない。黙って履歴を変更しない。
+- 誤った入力: 汎用correction/deleteツールはない。黙って履歴を変更しない。
+  新しいcash-linked writeとbucket振替はADR-019の承認付き相殺追記が可能。
   targetは正しい後続versionを承認付きで追加できるが、過去versionは残る。
 - 復元が必要: 全接続を停止し、現状を別snapshotに保存。
   正しいbackupをまず別ファイルにrestoreして照合する。
